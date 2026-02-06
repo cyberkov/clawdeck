@@ -8,13 +8,13 @@ ClawDeck is a kanban-style dashboard for managing AI agents powered by [OpenClaw
 
 ## Get Started
 
-**Option 1: Use the hosted platform**  
+**Option 1: Use the hosted platform**
 Sign up at [clawdeck.io](https://clawdeck.io) — free to start, we handle hosting.
 
-**Option 2: Self-host**  
+**Option 2: Self-host**
 Clone this repo and run your own instance. See [Self-Hosting](#self-hosting) below.
 
-**Option 3: Contribute**  
+**Option 3: Contribute**
 PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
@@ -59,6 +59,38 @@ bundle install
 bin/rails db:prepare
 bin/dev
 ```
+
+### Docker (optional)
+A multi-stage Dockerfile and a development compose file are included.
+
+Build the image locally:
+```bash
+docker build -t ghcr.io/<your-org-or-user>/clawdeck:local .
+```
+
+Run with docker-compose for development:
+```bash
+# Provide RAILS_MASTER_KEY env or use .env file
+RAILS_MASTER_KEY=your_master_key docker compose -f docker-compose.dev.yml up
+# The app will be available at http://localhost:3000
+```
+
+To push images from CI, the repository is set up to push to the GitHub Container Registry (ghcr.io) on pushes to the main branch. The workflow builds and tags the image with the commit SHA and `latest`.
+
+Required environment variables (in production):
+- RAILS_MASTER_KEY
+- DATABASE_URL
+- RESEND_API_KEY
+- GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET (if using GitHub OAuth)
+
+Troubleshooting local Docker development:
+- The application uses Rails encrypted credentials. To run the app in docker-compose.dev.yml you must provide a valid RAILS_MASTER_KEY that can decrypt config/credentials.yml.enc.
+  - Locally: set RAILS_MASTER_KEY in your environment or provide a .env file with RAILS_MASTER_KEY before running docker compose.
+  - GitHub Actions: add `RAILS_MASTER_KEY` to the repository secrets (Settings → Secrets) so the test and build jobs can run migrations and tests.
+- If you see an error like `ActiveSupport::MessageEncryptor::InvalidMessage` or `Missing 'secret_key_base'`, provide a valid RAILS_MASTER_KEY or set SECRET_KEY_BASE for precompilation.
+- For quick local dev without credentials, you may run `bin/dev` on your host machine (not inside the container) after `bundle install` and `bin/rails db:prepare`, which uses your host configuration.
+
+More info: See QUICKSTART.md and the .github/workflows/docker-image.yml file for CI behavior.
 
 Visit `http://localhost:3000`
 
